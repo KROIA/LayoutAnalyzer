@@ -11,7 +11,6 @@ namespace LayoutAnalyzer
         , m_pixelCount(0, 0)
         , m_pixelSize(1.0f)
         , m_pixels(nullptr)
-        //, m_vertecies(sf::PrimitiveType::Quads)
     {
 
     }
@@ -20,7 +19,6 @@ namespace LayoutAnalyzer
         , m_pixelCount(other.m_pixelCount)
         , m_pixelSize(other.m_pixelSize)
         , m_pixels(new sf::Uint8[other.m_pixelCount.x * other.m_pixelCount.y * 4])
-        //, m_vertecies(other.m_vertecies)
     {
         memcpy(m_pixels, other.m_pixels, m_pixelCount.x * m_pixelCount.y * 4);
     }
@@ -125,9 +123,7 @@ namespace LayoutAnalyzer
         for (unsigned int y = 0; y < height; y += CHUNK_SIZE) {
             for (unsigned int x = 0; x < width; x += CHUNK_SIZE) {
                 TextureData texture;
-                //sf::Texture texture;
                 texture.texture.create(CHUNK_SIZE, CHUNK_SIZE);
-                //texture.create(CHUNK_SIZE, CHUNK_SIZE);
                 sf::Image subImage;
                 subImage.create(CHUNK_SIZE, CHUNK_SIZE);
 
@@ -144,16 +140,9 @@ namespace LayoutAnalyzer
                         }
                     }
                 }
-
-                //texture.update(subImage);
                 texture.texture.update(subImage);
                 texture.pos = { x,y };
                 textures.emplace_back(std::move(texture));
-
-                
-                //sprite.setPosition(x, y);
-                //sprite.setScale(0.1, 0.1);
-                //sprites.emplace_back(std::move(sprite));
             }
         }
         for (size_t i = 0; i < textures.size(); ++i)
@@ -167,19 +156,10 @@ namespace LayoutAnalyzer
     void LargePixelPainter::drawComponent(sf::RenderTarget& target,
                                      sf::RenderStates states) const
     {
-		LA_UNUSED(states);
-        /*for (const TextureData& texture : textures)
-        {
-            sf::Sprite sprite(texture.texture);
-            sprite.setPosition(texture.pos.x, texture.pos.y);
-            //sprite.setScale(0.1, 0.1);
-            target.draw(sprite);
-        }*/
-        
+		LA_UNUSED(states);        
         for (const auto& sprite : sprites) {
             target.draw(sprite);
         }
-        //target.draw(m_vertecies);
     }
 
 

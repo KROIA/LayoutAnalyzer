@@ -33,7 +33,6 @@ namespace LayoutAnalyzer
         private:
         void createChunks();
         bool loadLargeImageToSfImage(const std::string& filename);
-        // sf::Vector2f m_position;
         sf::Vector2u m_pixelCount;
         float m_pixelSize;
 
@@ -47,6 +46,5 @@ namespace LayoutAnalyzer
         };
         std::vector<TextureData> textures;
         std::vector<sf::Sprite> sprites;
-        //sf::VertexArray m_vertecies;
     };
 }

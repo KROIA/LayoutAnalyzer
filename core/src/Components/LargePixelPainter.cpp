@@ -37,14 +37,14 @@ namespace LayoutAnalyzer
         return true;
     }
 
-    void LargePixelPainter::setPixelSize(float size)
-    {
-        m_pixelSize = size;
-    }
-    float LargePixelPainter::getPixelSize() const
-    {
-        return m_pixelSize;
-    }
+    //void LargePixelPainter::setPixelSize(float size)
+    //{
+    //    m_pixelSize = size;
+    //}
+    //float LargePixelPainter::getPixelSize() const
+    //{
+    //    return m_pixelSize;
+    //}
 
     void LargePixelPainter::setPixelCount(const sf::Vector2u& count)
     {
@@ -178,35 +178,13 @@ namespace LayoutAnalyzer
             return false;
         }
         setPixelCount({ width , height });
-        //m_vertecies.resize(width * height * 4);
-        
-        
-        //size_t size = width * height;
         for (unsigned x = 0; x < width; x++)
         {
             for (unsigned y = 0; y < height; y++)
             {
                 size_t index = 3 * ((size_t)y * (size_t)width + (size_t)x);
-                //size_t index1 = 3 * ((size_t)y * (size_t)width + (size_t)x);
-                //size_t index2 = 3 * ((size_t)y * (size_t)width + (size_t)(x+1));
-                //size_t index3 = 3 * ((size_t)(y+1) * (size_t)width + (size_t)(x+1));
-                //size_t index4 = 3 * ((size_t)(y+1) * (size_t)width + (size_t)x);
-                //if (index3 >= size)
-                //    continue;
-                //int r = (int)image[index1] + (int)image[index2] + (int)image[index3] + (int)image[index4];
-                //int g = (int)image[index1+1] + (int)image[index2+1] + (int)image[index3+1] + (int)image[index4+1];
-                //int b = (int)image[index1+2] + (int)image[index2+2] + (int)image[index3+2] + (int)image[index4+2];
-                //sf::Color color(r/4,g/4,b/4);
                 sf::Color color(image[index], image[index + 1], image[index + 2]);
                 setPixel({ x, y }, color);
-                /*m_vertecies[counter].color = color;
-                m_vertecies[counter++].position = sf::Vector2f(x, y);
-                m_vertecies[counter].color = color;
-                m_vertecies[counter++].position = sf::Vector2f(x+1, y);
-                m_vertecies[counter].color = color;
-                m_vertecies[counter++].position = sf::Vector2f(x+1, y+1);
-                m_vertecies[counter].color = color;
-                m_vertecies[counter++].position = sf::Vector2f(x, y+1);*/
             }
         }
         Logger::logInfo("Image loaded: " + filename);

@@ -9,5 +9,5 @@
 /// USER_SECTION_START 2
 #include "QSFML_EditorWidget.h"
 
-#include "PrintLayer.h"
+#include "Objects/PrintLayer.h"
 /// USER_SECTION_END

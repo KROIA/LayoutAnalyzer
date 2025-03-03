@@ -20,4 +20,5 @@ private:
 	RibbonImpl* m_ribbon;
 
 	QSFML::Scene* m_scene;
+	LayoutAnalyzer::PrintLayer* layer;
 };

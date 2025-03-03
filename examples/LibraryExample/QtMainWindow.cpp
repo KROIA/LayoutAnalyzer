@@ -1,5 +1,6 @@
 #include "QtMainWindow.h"
 #include <QDir>
+#include <QFileDialog>
 
 QtMainWindow::QtMainWindow(QWidget *parent)
 	: QMainWindow(parent)
@@ -9,7 +10,28 @@ QtMainWindow::QtMainWindow(QWidget *parent)
 
 	setupScene();
 
+	RibbonImpl::InputButtons& inputButtons = m_ribbon->getInputButtons();
+	connect(inputButtons.loadLayer, &RibbonWidget::RibbonButton::clicked, [this]()
+		{
+			QString fileName = QFileDialog::getOpenFileName(this, tr("Open Image"), "", tr("Image Files (*.png *.jpg *.bmp)"));
+			if (fileName.isEmpty())
+				return;
+			layer->loadLayer(fileName.toStdString());
+		});
 
+	connect(inputButtons.loadMask, &RibbonWidget::RibbonButton::clicked, [this]()
+		{
+			QString fileName = QFileDialog::getOpenFileName(this, tr("Open Image"), "", tr("Image Files (*.png *.jpg *.bmp)"));
+			if (fileName.isEmpty())
+				return;
+			layer->loadFilter(fileName.toStdString());
+		});
+
+	RibbonImpl::AnalysisButtons& analysisButtons = m_ribbon->getAnalysisButtons();
+	connect(analysisButtons.startViaDetection, &RibbonWidget::RibbonButton::clicked, [this]()
+		{
+			layer->applyFilter();
+		});
 }
 
 QtMainWindow::~QtMainWindow()
@@ -31,11 +53,15 @@ void QtMainWindow::setupScene()
     //settings.updateControlls.enableUpdateLoop = false;
     m_scene = new QSFML::Scene(ui.engine_widget, settings);
 	QSFML::Objects::DefaultEditor* defaultEditor = new QSFML::Objects::DefaultEditor("Editor", { 20000,20000 });
+	defaultEditor->getCamera()->setMinZoom(0.01);
 	m_scene->addObject(defaultEditor);
 
 
+	layer = new LayoutAnalyzer::PrintLayer();
+	m_scene->addObject(layer);
+
     //std::string layersPath = "D:\\Users\\Alex\\Dokumente\\SoftwareProjects\\LayoutAnalyzer\\Layout";
-    std::string layersPath = "..\\Layout";
+    /*std::string layersPath = "..\\Layout";
 	// Get File list in directory
 	QDir dir(QString::fromStdString(layersPath));
 	QStringList filters;
@@ -48,7 +74,7 @@ void QtMainWindow::setupScene()
 		LayoutAnalyzer::PrintLayer* layer = new LayoutAnalyzer::PrintLayer(path);
 		m_scene->addObject(layer);
 		break;
-	}
+	}*/
 
 
 	m_scene->start();

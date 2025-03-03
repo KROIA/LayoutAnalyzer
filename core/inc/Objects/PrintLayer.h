@@ -1,6 +1,8 @@
 #pragma once
 #include "LayoutAnalyzer_base.h"
 #include "Components/LargePixelPainter.h"
+#include "Components/ViaFilter.h"
+
 
 namespace LayoutAnalyzer
 {
@@ -8,11 +10,18 @@ namespace LayoutAnalyzer
 	{
 		public:
 		OBJECT_DECL(PrintLayer);
-		PrintLayer(const std::string &imagePath);
+		PrintLayer();
 		~PrintLayer();
+
+
+		void loadLayer(const std::string& imagePath);
+		void loadFilter(const std::string& imagePath);
+		void applyFilter();
 
 		private:
 
 		LargePixelPainter *m_painter = nullptr;
+		ViaFilter* m_filter = nullptr;
+		QSFML::Components::PointPainter* m_pointPainter = nullptr;
 	};
 }

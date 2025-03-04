@@ -20,9 +20,13 @@ namespace LayoutAnalyzer
         const sf::Vector2u& getPixelCount() const;
 
         void setPixel(const sf::Vector2u& pos, const sf::Color& c);
+		void replacePixel(const sf::Color& from, const sf::Color& to);
+        void clearPixels(const sf::Color &color);
         sf::Color getPixel(const sf::Vector2u& pos) const;
-		const sf::Uint8* getPixels() const 
+        sf::Uint8* getPixels()
         { return m_pixels; }
+        void updateTexture(const sf::Vector2u &pixelPos);
+        void updateTexture();
 
         void clear();
 

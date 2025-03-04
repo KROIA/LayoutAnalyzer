@@ -50,6 +50,14 @@ namespace LayoutAnalyzer
 			m_mask.scale(scale/m_scale);
 			m_scale = scale;
 		}
+		const sf::Vector2u &getSize() const
+		{
+			return m_pixelCount;
+		}
+		const sf::Vector2u &getMaskSize() const
+		{
+			return m_mask.getSize();
+		}
 
 
 	private:
@@ -62,7 +70,7 @@ namespace LayoutAnalyzer
 			size_t index = getPixelIndex(pos);
 			return sf::Color(m_pixels[index * 4], m_pixels[index * 4 + 1], m_pixels[index * 4 + 2], m_pixels[index * 4 + 3]);
 		}*/
-		void appyMask() const;
+		void applyMask() const;
 
 		float* m_pixels = nullptr;
 		float m_scale = 1.f;

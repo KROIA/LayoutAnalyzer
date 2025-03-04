@@ -1,6 +1,7 @@
 #pragma once
 
 #include "RibbonWidget.h"
+#include "LayoutAnalyzer.h"
 
 class RibbonImpl : public RibbonWidget::Ribbon
 {
@@ -8,15 +9,29 @@ class RibbonImpl : public RibbonWidget::Ribbon
 	public:
 		RibbonImpl(QWidget* parent = nullptr);
 
+		struct LayerButtons
+		{
+			RibbonWidget::RibbonButton* addLayer;
+			RibbonWidget::RibbonButton* removeSelectedLayer;
+		};
 		struct InputButtons
 		{
-			RibbonWidget::RibbonButton* loadLayer;
 			RibbonWidget::RibbonButton* loadMask;
 		};
 
 		struct AnalysisButtons
 		{
 			RibbonWidget::RibbonButton* startViaDetection;
+		};
+
+		struct ToolButtons
+		{
+			RibbonWidget::InformativeToolButton* pathFinder;
+			RibbonWidget::InformativeToolButton* viaSetter;
+			RibbonWidget::InformativeToolButton* viaDeleter;
+			RibbonWidget::InformativeToolButton* silkscreenColorPicker;
+			RibbonWidget::InformativeToolButton* viaColorPicker;
+			RibbonWidget::InformativeToolButton* backgroundColorPicker;
 		};
 	
 		//struct SettingsButtons
@@ -46,16 +61,20 @@ class RibbonImpl : public RibbonWidget::Ribbon
 		//	RibbonWidget::InformativeToolButton* view3;
 		//};
 
-
+		LayerButtons& getLayerButtons();
 		InputButtons& getInputButtons();
 		AnalysisButtons& getAnalysisButtons();
+		ToolButtons& toolButtons();
+		void setToolButtonActive(LayoutAnalyzer::Toolbox::Tool tool);
 		//SettingsButtons& settingsButtons();
 		//WorkButtons& workButtons();
 		//EditButtons& editButtons();
 		//ViewButtons& viewButtons();
 	private:
+		LayerButtons m_layerButtons;
 		InputButtons m_inputButtons;
 		AnalysisButtons m_analysisButtons;
+		ToolButtons m_toolButtons;
 		//SettingsButtons m_settingsButtons;
 		//WorkButtons m_workButtons;
 		//EditButtons m_editButtons;

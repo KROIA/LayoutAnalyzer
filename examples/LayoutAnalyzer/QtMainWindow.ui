@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>419</width>
-    <height>408</height>
+    <width>1074</width>
+    <height>663</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -41,7 +41,57 @@
      </widget>
     </item>
     <item>
-     <widget class="QWidget" name="engine_widget" native="true"/>
+     <widget class="QFrame" name="frame">
+      <property name="frameShape">
+       <enum>QFrame::Shape::NoFrame</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Shadow::Raised</enum>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,5">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QFrame" name="layerSelector_frame">
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>100</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::Shape::NoFrame</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Shadow::Raised</enum>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_2"/>
+        </widget>
+       </item>
+       <item>
+        <widget class="QWidget" name="engine_widget" native="true"/>
+       </item>
+      </layout>
+     </widget>
     </item>
    </layout>
   </widget>
@@ -50,7 +100,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>419</width>
+     <width>1074</width>
      <height>21</height>
     </rect>
    </property>

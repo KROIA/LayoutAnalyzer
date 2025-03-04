@@ -37,46 +37,15 @@ namespace LayoutAnalyzer
         return true;
     }
 
-    //void LargePixelPainter::setPixelSize(float size)
-    //{
-    //    m_pixelSize = size;
-    //}
-    //float LargePixelPainter::getPixelSize() const
-    //{
-    //    return m_pixelSize;
-    //}
-
     void LargePixelPainter::setPixelCount(const sf::Vector2u& count)
     {
         if (count == m_pixelCount)
             return;
         sf::Uint8* newPixels = new sf::Uint8[count.x * count.y * 4];
-        if (m_pixels)
-        {
-            for (unsigned int i = 0; i < count.y; ++i)
-            {
-                for (unsigned int j = 0; j < count.x; ++j)
-                {
-                    if (i < m_pixelCount.y && j < m_pixelCount.x)
-                    {
-                        newPixels[(i * count.x + j) * 4 + 0] = m_pixels[(i * m_pixelCount.x + j) * 4 + 0];
-                        newPixels[(i * count.x + j) * 4 + 1] = m_pixels[(i * m_pixelCount.x + j) * 4 + 1];
-                        newPixels[(i * count.x + j) * 4 + 2] = m_pixels[(i * m_pixelCount.x + j) * 4 + 2];
-                        newPixels[(i * count.x + j) * 4 + 3] = m_pixels[(i * m_pixelCount.x + j) * 4 + 3];
-                    }
-                    else
-                    {
-                        newPixels[(i * count.x + j) * 4 + 0] = 0;
-                        newPixels[(i * count.x + j) * 4 + 1] = 0;
-                        newPixels[(i * count.x + j) * 4 + 2] = 0;
-                        newPixels[(i * count.x + j) * 4 + 3] = 0;
-                    }
-                }
-            }
-            delete[] m_pixels;
-        }
+        memset(newPixels, 0, count.x * count.y * 4);
         m_pixelCount = count;
         m_pixels = newPixels;
+		createChunks();
     }
     const sf::Vector2u& LargePixelPainter::getPixelCount() const
     {
@@ -94,6 +63,37 @@ namespace LayoutAnalyzer
             m_pixels[index + 3] = c.a;
         }
     }
+    void LargePixelPainter::clearPixels(const sf::Color& color)
+    {
+		for (unsigned int i = 0; i < m_pixelCount.x * m_pixelCount.y; ++i)
+		{
+			m_pixels[i * 4 + 0] = color.r;
+			m_pixels[i * 4 + 1] = color.g;
+			m_pixels[i * 4 + 2] = color.b;
+			m_pixels[i * 4 + 3] = color.a;
+		}
+        // update all textures
+		//updateTexture();
+    }
+    void LargePixelPainter::replacePixel(const sf::Color& from, const sf::Color& to)
+    {
+		for (unsigned int i = 0; i < m_pixelCount.x * m_pixelCount.y; ++i)
+		{
+			if (m_pixels[i * 4 + 0] == from.r &&
+				m_pixels[i * 4 + 1] == from.g &&
+				m_pixels[i * 4 + 2] == from.b &&
+				m_pixels[i * 4 + 3] == from.a)
+			{
+				m_pixels[i * 4 + 0] = to.r;
+				m_pixels[i * 4 + 1] = to.g;
+				m_pixels[i * 4 + 2] = to.b;
+				m_pixels[i * 4 + 3] = to.a;
+			}
+		}
+		// update all textures
+		//updateTexture();
+
+    }
     sf::Color LargePixelPainter::getPixel(const sf::Vector2u& pos) const
     {
         if (pos.x < m_pixelCount.x && pos.y < m_pixelCount.y)
@@ -106,6 +106,66 @@ namespace LayoutAnalyzer
         }
         return sf::Color::Black;
     }
+    void LargePixelPainter::updateTexture(const sf::Vector2u& pixelPos)
+    {
+        // Find chunk
+		size_t chunkIndex = (pixelPos.y / CHUNK_SIZE) * (m_pixelCount.x / CHUNK_SIZE) + (pixelPos.x / CHUNK_SIZE);
+		if (chunkIndex >= textures.size())
+			return;
+		sf::Image subImage;
+		subImage.create(CHUNK_SIZE, CHUNK_SIZE);
+		sf::Vector2u chunkPos = textures[chunkIndex].pos;
+		for (int j = 0; j < CHUNK_SIZE; ++j) {
+			for (int i = 0; i < CHUNK_SIZE; ++i) {
+				if (chunkPos.x + i < m_pixelCount.x && chunkPos.y + j < m_pixelCount.y)
+				{
+					size_t pixelCoord = ((chunkPos.y + j) * m_pixelCount.x + (chunkPos.x + i)) * 4;
+					sf::Color color(m_pixels[pixelCoord + 0],
+						m_pixels[pixelCoord + 1],
+						m_pixels[pixelCoord + 2],
+						m_pixels[pixelCoord + 3]);
+					subImage.setPixel(i, j, color);
+				}
+			}
+		}
+		textures[chunkIndex].texture.update(subImage);
+    }
+    void LargePixelPainter::updateTexture()
+    {
+        for (size_t t = 0; t < textures.size(); ++t)
+        {
+            sf::Image subImage;
+            subImage.create(CHUNK_SIZE, CHUNK_SIZE); 
+            sf::Vector2u chunkPos = textures[t].pos;
+            for (int j = 0; j < CHUNK_SIZE; ++j) {
+                for (int i = 0; i < CHUNK_SIZE; ++i) {
+                    if (chunkPos.x + i < m_pixelCount.x && chunkPos.y + j < m_pixelCount.y)
+                    {
+                        size_t pixelCoord = ((chunkPos.y + j) * m_pixelCount.x + (chunkPos.x + i)) * 4;
+                        sf::Color color(m_pixels[pixelCoord + 0],
+                            m_pixels[pixelCoord + 1],
+                            m_pixels[pixelCoord + 2],
+                            m_pixels[pixelCoord + 3]);
+                        subImage.setPixel(i, j, color);
+                    }
+                    else
+                    {
+                        subImage.setPixel(i, j, sf::Color::Transparent);
+                    }
+                }
+            }
+            textures[t].texture.update(subImage);
+        }
+
+		sprites.clear();
+		sprites.reserve((m_pixelCount.x / CHUNK_SIZE) * (m_pixelCount.y / CHUNK_SIZE));
+        for (size_t i = 0; i < textures.size(); ++i)
+        {
+            sf::Sprite sprite(textures[i].texture);
+            sprite.setPosition(textures[i].pos.x, textures[i].pos.y);
+            sprites.emplace_back(std::move(sprite));
+        }
+    }
 
     void LargePixelPainter::clear()
     {
@@ -117,6 +177,8 @@ namespace LayoutAnalyzer
         unsigned int width = m_pixelCount.x;
         unsigned int height = m_pixelCount.y;
 
+		textures.clear();
+		sprites.clear();
 		textures.reserve((width / CHUNK_SIZE) * (height / CHUNK_SIZE));
 		sprites.reserve((width / CHUNK_SIZE) * (height / CHUNK_SIZE));
 
@@ -171,22 +233,27 @@ namespace LayoutAnalyzer
         std::vector<unsigned char> image; //the raw pixels
         unsigned width, height;
 
-        unsigned error = lodepng::decode(image, width, height, filename, LCT_RGB, 8);
+        unsigned error = lodepng::decode(image, width, height, filename, LCT_RGBA, 8);
 
         if (error) {
             Logger::logError("Failed to load image: " + filename + " error: " + lodepng_error_text(error));
             return false;
         }
         setPixelCount({ width , height });
-        for (unsigned x = 0; x < width; x++)
+        memcpy(m_pixels, image.data(), width * height * 4);
+        /*for (unsigned x = 0; x < width; x++)
         {
             for (unsigned y = 0; y < height; y++)
             {
-                size_t index = 3 * ((size_t)y * (size_t)width + (size_t)x);
-                sf::Color color(image[index], image[index + 1], image[index + 2]);
-                setPixel({ x, y }, color);
+                size_t subIndex = ((size_t)y * (size_t)width + (size_t)x);
+                size_t index1 = 4 * subIndex;
+                size_t index2 = subIndex * 4;
+                m_pixels[index2 + 0] = image[index1] ;
+                m_pixels[index2 + 1] = image[index1+1];
+                m_pixels[index2 + 2] = image[index1+2];
+                m_pixels[index2 + 3] = image[index1 + 3];
             }
-        }
+        }*/
         Logger::logInfo("Image loaded: " + filename);
         return true;
     }

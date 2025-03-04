@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>icons/accept.png</file>
+        <file>icons/Via.png</file>
+        <file>icons/ViaRemove.png</file>
     </qresource>
 </RCC>

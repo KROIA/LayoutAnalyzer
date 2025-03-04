@@ -10,4 +10,6 @@
 #include "QSFML_EditorWidget.h"
 
 #include "Objects/PrintLayer.h"
+#include "Toolbox.h"
+#include "GlobalSettings.h"
 /// USER_SECTION_END

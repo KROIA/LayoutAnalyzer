@@ -2,36 +2,127 @@
 #include <QDir>
 #include <QFileDialog>
 
+
 QtMainWindow::QtMainWindow(QWidget *parent)
 	: QMainWindow(parent)
 {
 	ui.setupUi(this);
 	m_ribbon = new RibbonImpl(ui.ribbon_widget);
+	m_spacer = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
+	if (ui.layerSelector_frame->layout() == nullptr)
+	{
+		QVBoxLayout* layout = new QVBoxLayout();
+		ui.layerSelector_frame->setLayout(layout);
+	}
+	ui.layerSelector_frame->layout()->addItem(m_spacer);
 
 	setupScene();
-
-	RibbonImpl::InputButtons& inputButtons = m_ribbon->getInputButtons();
-	connect(inputButtons.loadLayer, &RibbonWidget::RibbonButton::clicked, [this]()
+	RibbonImpl::LayerButtons& layerButtons = m_ribbon->getLayerButtons();
+	connect(layerButtons.addLayer, &RibbonWidget::RibbonButton::clicked, [this]()
 		{
-			QString fileName = QFileDialog::getOpenFileName(this, tr("Open Image"), "", tr("Image Files (*.png *.jpg *.bmp)"));
+			QString fileName = QFileDialog::getOpenFileName(this, tr("Open Layer Image"), "", tr("Image Files (*.png *.jpg *.bmp)"));
 			if (fileName.isEmpty())
 				return;
-			layer->loadLayer(fileName.toStdString());
+			fileName.replace("/", "\\");
+			
+			LayerData layerData;
+			layerData.layer = new LayoutAnalyzer::PrintLayer();
+			std::string filePath = fileName.toStdString();
+			std::string name = filePath.substr(filePath.find_last_of("\\") + 1);
+			
+			if (layerData.layer->loadLayer(filePath))
+			{
+				layerData.button = new QPushButton(name.c_str());
+				ui.layerSelector_frame->layout()->removeItem(m_spacer);
+				ui.layerSelector_frame->layout()->addWidget(layerData.button);
+				ui.layerSelector_frame->layout()->addItem(m_spacer);
+
+				
+				
+				m_scene->addObject(layerData.layer);
+
+				connect(layerData.button, &QPushButton::clicked, [this, index = m_layers.size()]()
+					{
+						selectLayer(index);
+					});
+
+				std::string maskPath = LayoutAnalyzer::GlobalSettings::getFilterMaskPath();
+				if (!maskPath.empty())
+					layerData.layer->loadFilter(maskPath);
+
+				m_layers.push_back(layerData);
+				selectLayer(m_layers.size()-1);
+			}
+
 		});
 
+	connect(layerButtons.removeSelectedLayer, &RibbonWidget::RibbonButton::clicked, [this]()
+		{
+			if (m_layers.size() == 0)
+				return;
+
+			delete m_layers[m_selectedLayer].button;
+			m_layers[m_selectedLayer].layer->deleteLater();
+			m_layers.erase(m_layers.begin() + m_selectedLayer);
+			if (m_selectedLayer != 0)
+				m_selectedLayer--;
+			selectLayer(m_selectedLayer);
+		});
+
+	RibbonImpl::InputButtons& inputButtons = m_ribbon->getInputButtons();
 	connect(inputButtons.loadMask, &RibbonWidget::RibbonButton::clicked, [this]()
 		{
-			QString fileName = QFileDialog::getOpenFileName(this, tr("Open Image"), "", tr("Image Files (*.png *.jpg *.bmp)"));
+			QString fileName = QFileDialog::getOpenFileName(this, tr("Open Filter Image"), "", tr("Image Files (*.png *.jpg *.bmp)"));
 			if (fileName.isEmpty())
 				return;
-			layer->loadFilter(fileName.toStdString());
+			LayoutAnalyzer::GlobalSettings::setFilterMaskPath(fileName.toStdString());
+			for (size_t i = 0; i < m_layers.size(); ++i)
+				m_layers[i].layer->loadFilter(LayoutAnalyzer::GlobalSettings::getFilterMaskPath());
 		});
 
 	RibbonImpl::AnalysisButtons& analysisButtons = m_ribbon->getAnalysisButtons();
 	connect(analysisButtons.startViaDetection, &RibbonWidget::RibbonButton::clicked, [this]()
 		{
-			layer->applyFilter();
+			if (m_layers.size() > 0)
+				getSelectedLayer().layer->applyFilter();
 		});
+
+	RibbonImpl::ToolButtons& toolButtons = m_ribbon->toolButtons();
+	connect(toolButtons.pathFinder, &RibbonWidget::InformativeToolButton::clicked, [this]()
+		{
+			LayoutAnalyzer::Toolbox::setCurrentTool(LayoutAnalyzer::Toolbox::Tool::pathFinder);
+			m_ribbon->setToolButtonActive(LayoutAnalyzer::Toolbox::getCurrentTool());
+		});
+
+	connect(toolButtons.viaSetter, &RibbonWidget::InformativeToolButton::clicked, [this]()
+		{
+			LayoutAnalyzer::Toolbox::setCurrentTool(LayoutAnalyzer::Toolbox::Tool::viaSetter);
+			m_ribbon->setToolButtonActive(LayoutAnalyzer::Toolbox::getCurrentTool());
+		});
+
+	connect(toolButtons.viaDeleter, &RibbonWidget::InformativeToolButton::clicked, [this]()
+		{
+			LayoutAnalyzer::Toolbox::setCurrentTool(LayoutAnalyzer::Toolbox::Tool::viaDeleter);
+			m_ribbon->setToolButtonActive(LayoutAnalyzer::Toolbox::getCurrentTool());
+		});
+
+	connect(toolButtons.silkscreenColorPicker, &RibbonWidget::InformativeToolButton::clicked, [this]()
+		{
+			LayoutAnalyzer::Toolbox::setCurrentTool(LayoutAnalyzer::Toolbox::Tool::silkscreenColorPicker);
+			m_ribbon->setToolButtonActive(LayoutAnalyzer::Toolbox::getCurrentTool());
+		});
+	connect(toolButtons.viaColorPicker, &RibbonWidget::InformativeToolButton::clicked, [this]()
+		{
+			LayoutAnalyzer::Toolbox::setCurrentTool(LayoutAnalyzer::Toolbox::Tool::viaColorPicker);
+			m_ribbon->setToolButtonActive(LayoutAnalyzer::Toolbox::getCurrentTool());
+		});
+	connect(toolButtons.backgroundColorPicker, &RibbonWidget::InformativeToolButton::clicked, [this]()
+		{
+			LayoutAnalyzer::Toolbox::setCurrentTool(LayoutAnalyzer::Toolbox::Tool::backgroundColorPicker);
+			m_ribbon->setToolButtonActive(LayoutAnalyzer::Toolbox::getCurrentTool());
+		});
+
+
 }
 
 QtMainWindow::~QtMainWindow()
@@ -57,8 +148,8 @@ void QtMainWindow::setupScene()
 	m_scene->addObject(defaultEditor);
 
 
-	layer = new LayoutAnalyzer::PrintLayer();
-	m_scene->addObject(layer);
+	//layer = new LayoutAnalyzer::PrintLayer();
+	//m_scene->addObject(layer);
 
     //std::string layersPath = "D:\\Users\\Alex\\Dokumente\\SoftwareProjects\\LayoutAnalyzer\\Layout";
     /*std::string layersPath = "..\\Layout";
@@ -79,4 +170,30 @@ void QtMainWindow::setupScene()
 
 	m_scene->start();
 
+}
+
+void QtMainWindow::selectLayer(size_t index)
+{
+	if (m_layers.size() <= index)
+		return;
+
+	for (size_t i = 0; i < m_layers.size(); ++i)
+	{
+		if (i == index)
+		{
+			m_layers[i].button->setDown(true);
+			m_layers[i].layer->setEnabled(true);
+		}
+		else
+		{
+			m_layers[i].button->setDown(false);
+		    m_layers[i].layer->setEnabled(false);
+		    m_layers[i].layer->stopPathFinder();
+		}
+	}
+	m_selectedLayer = index;
+}
+QtMainWindow::LayerData& QtMainWindow::getSelectedLayer()
+{
+	return m_layers[m_selectedLayer];
 }

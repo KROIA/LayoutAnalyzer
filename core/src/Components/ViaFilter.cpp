@@ -21,7 +21,7 @@ namespace LayoutAnalyzer
 		std::vector<sf::Vector2u> rawCoords;
 		sf::Vector2u maskCenterOffset = m_mask.getSize() / 2u;
 		if (m_maskResult.empty())
-			appyMask();
+			applyMask();
 		float sensitivity = 0.8f;
 		for (size_t y = 0; y < m_pixelCount.y; ++y)
 		{
@@ -64,7 +64,7 @@ namespace LayoutAnalyzer
 		return coords;
 	}
 
-	void ViaFilter::appyMask() const
+	void ViaFilter::applyMask() const
 	{
 		static constexpr bool useThreads = true;
 

@@ -18,9 +18,13 @@ namespace LayoutAnalyzer
 
 
 		bool loadLayer(const std::string& imagePath);
+		bool saveDataToFile(const std::string& path);
+		bool loadDataFromFile(const std::string& path);
+		const std::string& getLayerImagePath() const { return m_layerImagePath; }
 		void loadFilter(const std::string& imagePath);
 		void applyFilter();
 		void stopPathFinder();
+		void propagatePathFinderResult(const ConnectionPathFinder::PathFinderResult& result);
 
 		private:
 		void removeViaNear(const sf::Vector2u &pos);
@@ -35,5 +39,6 @@ namespace LayoutAnalyzer
 		QSFML::Components::PointPainter* m_pointPainter = nullptr;
 
 		std::vector<sf::Vector2u> m_viaCoords;
+		std::string m_layerImagePath;
 	};
 }

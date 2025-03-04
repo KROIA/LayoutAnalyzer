@@ -1,5 +1,6 @@
 #include "Components/ConnectionPathFinder.h"
 #include "GlobalSettings.h"
+#include "Objects/PrintLayer.h"
 #include <queue>
 
 namespace LayoutAnalyzer
@@ -39,8 +40,12 @@ namespace LayoutAnalyzer
 
 		m_textureUptdateCounter = false;
 		m_pathFinished = false;
-		m_thread = new std::thread(&ConnectionPathFinder::pathFinderThread, this);
+		m_thread = new std::thread(&ConnectionPathFinder::pathFinderThreadFromConnectionWire, this);
 
+	}
+	void ConnectionPathFinder::startPathFinderFromVia(const sf::Vector2u& via)
+	{
+		LA_UNUSED(via);
 	}
 
 
@@ -60,6 +65,11 @@ namespace LayoutAnalyzer
 			{
 				m_pathFinished = false;
 				m_searching = false;
+				PrintLayer* parent = dynamic_cast<PrintLayer*>(getParent());
+				if (parent)
+				{
+					parent->propagatePathFinderResult(m_result);
+				}
 			}
 			m_textureUptdateCounter = 0;
 			m_pathfinderResult->updateTexture();
@@ -78,7 +88,7 @@ namespace LayoutAnalyzer
 		}
 		m_searching = false;
 	}
-	void ConnectionPathFinder::pathFinderThread()
+	void ConnectionPathFinder::pathFinderThreadFromConnectionWire()
 	{
 		sf::Vector2u pixelCount = m_pixelPainter->getPixelCount();
 		int width = pixelCount.x;
@@ -89,9 +99,12 @@ namespace LayoutAnalyzer
 		std::vector<std::vector<bool>> visited(pixelCount.x, std::vector<bool>(pixelCount.y, false));
 		visited[m_start.x][m_start.y] = true;  // Mark as visited
 
-		sf::Color printColor = GlobalSettings::getSilkscreenColor();
+		sf::Color silkScreenColor = GlobalSettings::getSilkscreenColor();
 		sf::Color viaColor = GlobalSettings::getViaColor();
+		float viaRadius = GlobalSettings::getViaRadius();
+		PathFinderResult result;
 
+		std::vector<sf::Vector2u> likelyViaPixel;
 		while (!m_stopThread && !pixels.empty())
 		{
 			auto [x, y] = pixels.front();
@@ -112,11 +125,17 @@ namespace LayoutAnalyzer
 					sf::Color c = m_pixelPainter->getPixel(sf::Vector2u(newX, newY));
 					if (!visited[newX][newY])
 					{
-						if (c == m_startColor || c == viaColor) {
+						if (c == m_startColor) {
 							pixels.push({ newX, newY });
 							visited[newX][newY] = true; // Mark as visited immediately
+							result.pixelPositions.push_back(sf::Vector2u(newX, newY));
+						}else if (c == viaColor) {
+							pixels.push({ newX, newY });
+							visited[newX][newY] = true; // Mark as visited immediately
+							result.pixelPositions.push_back(sf::Vector2u(newX, newY));
+							likelyViaPixel.push_back(sf::Vector2u(newX, newY));
 						}
-						else if(c == printColor)
+						else if(c == silkScreenColor)
 						{
 							for (int i = 0; i < 10; ++i)
 							{
@@ -127,9 +146,15 @@ namespace LayoutAnalyzer
 									sf::Color c2 = m_pixelPainter->getPixel(sf::Vector2u(newX, newY));
 									if (!visited[newX][newY])
 									{
-										if (c2 == m_startColor || c == viaColor) {
+										if (c2 == m_startColor) {
 											pixels.push({ newX, newY });
 											visited[newX][newY] = true; // Mark as visited immediately
+											result.pixelPositions.push_back(sf::Vector2u(newX, newY));
+										}else if (c == viaColor) {
+											pixels.push({ newX, newY });
+											visited[newX][newY] = true; // Mark as visited immediately
+											result.pixelPositions.push_back(sf::Vector2u(newX, newY));
+											likelyViaPixel.push_back(sf::Vector2u(newX, newY));
 										}
 									}
 								}
@@ -139,7 +164,57 @@ namespace LayoutAnalyzer
 				}
 			}
 		}
+
+		std::vector<sf::Vector2u> vias = m_viaLocations;
+		// Check for vias inside the path
+		if (likelyViaPixel.size() > 0)
+		{
+			for (size_t i = 0; i < likelyViaPixel.size(); ++i)
+			{
+				const sf::Vector2u& pixel = likelyViaPixel[i];
+				for (size_t j = 0; j < vias.size(); ++j)
+				{
+					const sf::Vector2u& via = vias[j];
+					float dx = (float)pixel.x - (float)via.x;
+					float dy = (float)pixel.y - (float)via.y;
+					float distance = sqrt(dx * dx + dy * dy);
+					if (distance < viaRadius)
+					{
+						result.viaPositions.push_back(via);
+						vias.erase(vias.begin() + j);
+						break;
+					}
+				}
+			}
+		}
+		else
+		{
+			for (size_t i = 0; i < result.pixelPositions.size(); ++i)
+			{
+				const sf::Vector2u& pixel = result.pixelPositions[i];
+				for (size_t j = 0; j < vias.size(); ++j)
+				{
+					const sf::Vector2u& via = vias[j];
+					float dx = (float)pixel.x - (float)via.x;
+					float dy = (float)pixel.y - (float)via.y;
+					float distance = sqrt(dx * dx + dy * dy);
+					if (distance < viaRadius*1.2f)
+					{
+						result.viaPositions.push_back(via);
+						vias.erase(vias.begin() + j);
+						break;
+					}
+				}
+			}
+		}
+		m_result = result;
+
 		if (pixels.empty())
 			m_pathFinished = true;
+	}
+
+	void ConnectionPathFinder::pathFinderThreadFromVia()
+	{
+
 	}
 }

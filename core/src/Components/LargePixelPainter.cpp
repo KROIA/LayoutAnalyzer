@@ -200,6 +200,8 @@ namespace LayoutAnalyzer
 											m_pixels[pixelCoord + 3]);
                             subImage.setPixel(i, j, color);
                         }
+                        else
+                            subImage.setPixel(i, j, sf::Color::Transparent);
                     }
                 }
                 texture.texture.update(subImage);

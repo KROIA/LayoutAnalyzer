@@ -22,6 +22,7 @@ RibbonImpl::RibbonImpl(QWidget* parent)
 	// Create buttons
 	m_layerButtons.addLayer = new RibbonWidget::RibbonButton("Add Layer", "Add a layer image", ":/icons/live_folder_2.png", true, layerGroup);
 	m_layerButtons.removeSelectedLayer = new RibbonWidget::RibbonButton("Remove Layer", "Remove selected layer", ":/icons/delete.png", true, layerGroup);
+	m_layerButtons.saveLayersToFile = new RibbonWidget::RibbonButton("Save Layers", "Save layers to file", ":/icons/floppy_disk.png", true, layerGroup);
 	
 	m_inputButtons.loadMask = new RibbonWidget::RibbonButton("Load Mask", "Load a mask image representig a via,\nused for via detection", ":/icons/live_folder_2.png", true, filterGroup);
 	

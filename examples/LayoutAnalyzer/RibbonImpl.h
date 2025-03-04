@@ -13,6 +13,7 @@ class RibbonImpl : public RibbonWidget::Ribbon
 		{
 			RibbonWidget::RibbonButton* addLayer;
 			RibbonWidget::RibbonButton* removeSelectedLayer;
+			RibbonWidget::RibbonButton* saveLayersToFile;
 		};
 		struct InputButtons
 		{

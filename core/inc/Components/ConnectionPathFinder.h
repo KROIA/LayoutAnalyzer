@@ -4,11 +4,16 @@
 
 namespace LayoutAnalyzer
 {
-    class LAYOUT_ANALYZER_EXPORT ConnectionPathFinder : 
-        public QSFML::Components::Component, 
-        public QSFML::Utilities::Updatable
-    {
-    public:
+	class LAYOUT_ANALYZER_EXPORT ConnectionPathFinder :
+		public QSFML::Components::Component,
+		public QSFML::Utilities::Updatable
+	{
+	public:
+		struct PathFinderResult
+		{
+			std::vector<sf::Vector2u> pixelPositions;
+			std::vector<sf::Vector2u> viaPositions;
+		};
         ConnectionPathFinder();
 		~ConnectionPathFinder();
 
@@ -18,24 +23,34 @@ namespace LayoutAnalyzer
 				stopThread();
 			m_pixelPainter = painter;
 		}
-		void setPathfinderResult(LargePixelPainter* painter)
+		void setPathfinderResultPainter(LargePixelPainter* painter)
 		{
 			if (!painter)
 				stopThread();
 			m_pathfinderResult = painter;
 		}
         void startPathFinder(const sf::Vector2u& start);
+		void startPathFinderFromVia(const sf::Vector2u& via);
 		void stopPathFinder() {
 			stopThread();
 		}
 
+		void setViaLocations(const std::vector<sf::Vector2u>& locations)
+		{
+			m_viaLocations = locations;
+		}
+		const PathFinderResult& getResult() const
+		{
+			return m_result;
+		}
     protected:
 
 		void update() override;
 
 	private:
 		void stopThread();
-		void pathFinderThread();
+		void pathFinderThreadFromConnectionWire();
+		void pathFinderThreadFromVia();
 
         LargePixelPainter* m_pixelPainter = nullptr;
 		LargePixelPainter* m_pathfinderResult = nullptr;
@@ -49,5 +64,9 @@ namespace LayoutAnalyzer
 		std::atomic<bool> m_pathFinished;
 		int m_textureUptdateCounter = 0;
 
+		std::vector<sf::Vector2u> m_viaLocations;
+
+
+		PathFinderResult m_result;
     };
 }

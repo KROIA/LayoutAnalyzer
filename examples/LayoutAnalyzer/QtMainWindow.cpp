@@ -20,7 +20,7 @@ QtMainWindow::QtMainWindow(QWidget *parent)
 	RibbonImpl::LayerButtons& layerButtons = m_ribbon->getLayerButtons();
 	connect(layerButtons.addLayer, &RibbonWidget::RibbonButton::clicked, [this]()
 		{
-			QString fileName = QFileDialog::getOpenFileName(this, tr("Open Layer Image"), "", tr("Image Files (*.png *.jpg *.bmp)"));
+			QString fileName = QFileDialog::getOpenFileName(this, tr("Open Layer Image"), "", tr("Image Files (*.png *.jpg *.bmp *.dat)"));
 			if (fileName.isEmpty())
 				return;
 			fileName.replace("/", "\\");
@@ -30,7 +30,17 @@ QtMainWindow::QtMainWindow(QWidget *parent)
 			std::string filePath = fileName.toStdString();
 			std::string name = filePath.substr(filePath.find_last_of("\\") + 1);
 			
-			if (layerData.layer->loadLayer(filePath))
+			bool loaded = false;
+
+			if (name.find(".dat") != std::string::npos)
+			{
+				loaded = layerData.layer->loadDataFromFile(filePath);
+			}
+			else
+			{
+				loaded = layerData.layer->loadLayer(filePath);
+			}
+			if(loaded)
 			{
 				layerData.button = new QPushButton(name.c_str());
 				ui.layerSelector_frame->layout()->removeItem(m_spacer);
@@ -68,6 +78,20 @@ QtMainWindow::QtMainWindow(QWidget *parent)
 				m_selectedLayer--;
 			selectLayer(m_selectedLayer);
 		});
+	connect(layerButtons.saveLayersToFile, &RibbonWidget::RibbonButton::clicked, [this]()
+		{
+			// File dialog to select a folder
+			QString folderPath = QFileDialog::getExistingDirectory(this, tr("Select Folder to save Layers"), "", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+			if (folderPath.isEmpty())
+				return;
+			std::string path = folderPath.toStdString();
+			for (size_t i = 0; i < m_layers.size(); ++i)
+			{
+				std::string name = path + "\\" + m_layers[i].layer->getName() + ".dat";
+				m_layers[i].layer->saveDataToFile(name);
+			}
+		});
+
 
 	RibbonImpl::InputButtons& inputButtons = m_ribbon->getInputButtons();
 	connect(inputButtons.loadMask, &RibbonWidget::RibbonButton::clicked, [this]()
@@ -177,18 +201,24 @@ void QtMainWindow::selectLayer(size_t index)
 	if (m_layers.size() <= index)
 		return;
 
+	m_layers[m_selectedLayer].layer->setRenderLayer(QSFML::RenderLayer::layer_0);
+	m_layers[index].layer->setRenderLayer(QSFML::RenderLayer::layer_1);
+
 	for (size_t i = 0; i < m_layers.size(); ++i)
 	{
 		if (i == index)
 		{
 			m_layers[i].button->setDown(true);
-			m_layers[i].layer->setEnabled(true);
+			//m_layers[i].layer->setEnabled(true);
+			m_layers[i].layer->enableInteractions(true);
+
 		}
 		else
 		{
 			m_layers[i].button->setDown(false);
-		    m_layers[i].layer->setEnabled(false);
+		    //m_layers[i].layer->setEnabled(false);
 		    m_layers[i].layer->stopPathFinder();
+			m_layers[i].layer->enableInteractions(false);
 		}
 	}
 	m_selectedLayer = index;

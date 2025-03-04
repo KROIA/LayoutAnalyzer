@@ -26,6 +26,7 @@ namespace LayoutAnalyzer
 			m_pixels = new float[pixelCount.x * pixelCount.y*3];
 			for (size_t i = 0; i < pixelCount.x * pixelCount.y; ++i)
 			{
+				// Reduce RGBA to RGB and scale
 				m_pixels[i*3] = pixels[i*4]*m_scale;
 				m_pixels[i*3+1] = pixels[i*4+1]*m_scale;
 				m_pixels[i*3+2] = pixels[i*4+2]*m_scale;
